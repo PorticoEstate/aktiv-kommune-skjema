@@ -5,7 +5,7 @@ exports.handler = async (event, context) => {
 
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const OWNER = 'ArildR82'; // <-- Bytt ut
-  const REPO = 'https://github.com/PorticoEstate/PorticoEstate';         // <-- Bytt ut
+  const REPO = 'aktiv-kommune-skjema';         // <-- Bytt ut
 
   const url = `https://api.github.com/repos/${OWNER}/${REPO}/issues`;
 
