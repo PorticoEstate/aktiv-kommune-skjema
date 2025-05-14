@@ -1,92 +1,78 @@
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const OWNER = 'PorticoEstate';
-const REPO = 'aktiv-kommune-skjema';
-const ORG = 'PorticoEstate'; // organisasjon
-const PROJECT_NUMBER = 2; // fra URL (https://github.com/orgs/PorticoEstate/projects/2/views/1)
-const MILESTONE_NAME = '📥 Innkommende feil og forslag';
+exports.handler = async (event, context) => {
+  const { title, body } = JSON.parse(event.body);
 
-exports.handler = async (event) => {
-  try {
-    const { title, body } = JSON.parse(event.body);
-    const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-    
-    if (!GITHUB_TOKEN) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ message: 'Missing GitHub token.' }),
-      };
+  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+  const OWNER = 'PorticoEstate';
+  const REPO = 'aktiv-kommune-skjema';
+  const PROJECT_ID = 'PVT_kwDOHVOdmc4AdXB3'; // <- Project v2 ID (forklarer under)
+  const MILESTONE_TITLE = 'Innkommende feil og forslag'; // uten emoji nå!
+
+  const apiUrl = 'https://api.github.com/graphql';
+
+  // Hjelpefunksjon for GraphQL
+  async function graphql(query, variables) {
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+
+    const data = await res.json();
+    if (data.errors) {
+      throw new Error(JSON.stringify(data.errors));
     }
+    return data.data;
+  }
 
-    // 1. Finn Milestone ID
+  try {
+    // Finn riktig milestone-ID
     const milestonesResponse = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/milestones`, {
       headers: {
         'Authorization': `Bearer ${GITHUB_TOKEN}`,
         'Accept': 'application/vnd.github+json',
-      },
+      }
     });
     const milestones = await milestonesResponse.json();
-    const milestone = milestones.find(m => m.title === MILESTONE_NAME);
-
+    const milestone = milestones.find(m => m.title === MILESTONE_TITLE);
     if (!milestone) {
       return {
-        statusCode: 500,
-        body: JSON.stringify({ message: 'Milestone not found.' }),
+        statusCode: 400,
+        body: JSON.stringify({ message: 'Milestone not found' }),
       };
     }
 
-    // 2. Opprett Issue med milestone
+    // Opprett issue
     const createIssueResponse = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${GITHUB_TOKEN}`,
         'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         title,
         body,
         milestone: milestone.number,
-      }),
+      })
     });
 
+    const createdIssue = await createIssueResponse.json();
     if (!createIssueResponse.ok) {
-      const errorData = await createIssueResponse.json();
       return {
         statusCode: createIssueResponse.status,
-        body: JSON.stringify({ message: `Error creating issue: ${errorData.message}` }),
+        body: JSON.stringify({ message: `Error: ${createdIssue.message}` })
       };
     }
 
-    const issueData = await createIssueResponse.json();
-
-    // 3. Finn Project ID via GraphQL
-    const projectQuery = `
-      query {
-        organization(login: "${ORG}") {
-          projectV2(number: ${PROJECT_NUMBER}) {
-            id
-          }
-        }
-      }
-    `;
-
-    const projectResponse = await fetch('https://api.github.com/graphql', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query: projectQuery }),
-    });
-
-    const projectResult = await projectResponse.json();
-    const projectId = projectResult.data.organization.projectV2.id;
-
-    // 4. Legg til Issue i Project via GraphQL
-    const addToProjectMutation = `
-      mutation {
-        addProjectV2ItemById(input: {projectId: "${projectId}", contentId: "${issueData.node_id}"}) {
+    // Legg issue inn i prosjektet (Project v2)
+    const mutation = `
+      mutation($projectId: ID!, $contentId: ID!) {
+        addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
           item {
             id
           }
@@ -94,25 +80,21 @@ exports.handler = async (event) => {
       }
     `;
 
-    await fetch('https://api.github.com/graphql', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query: addToProjectMutation }),
+    await graphql(mutation, {
+      projectId: PROJECT_ID,
+      contentId: createdIssue.node_id, // NB: ikke issue number, men node_id
     });
 
-    // 5. Ferdig - returner suksess
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: `Issue opprettet! Nummer: ${issueData.number}` }),
+      body: JSON.stringify({ message: `Issue opprettet! Nummer: ${createdIssue.number}` }),
     };
 
   } catch (error) {
+    console.error(error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: `Server error: ${error.message}` }),
+      body: JSON.stringify({ message: `Feil: ${error.message}` }),
     };
   }
 };
