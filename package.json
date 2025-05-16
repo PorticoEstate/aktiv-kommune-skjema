@@ -2,7 +2,6 @@
   "name": "aktivkommunefeedback",
   "version": "1.0.0",
   "dependencies": {
-    "@netlify/kv": "^0.4.0",
     "node-fetch": "^3.3.2"
   }
 }
