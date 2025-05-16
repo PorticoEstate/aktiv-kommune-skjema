@@ -2,23 +2,22 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Send inn feil eller forslag</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Roboto', sans-serif;
-      background-color: #f9f9f9;
+      background: #f9f9f9;
       padding: 2rem;
     }
 
-    .container {
-      max-width: 600px;
+    .form-container {
       background: white;
+      max-width: 600px;
+      margin: 0 auto;
       padding: 2rem;
-      border-radius: 12px;
-      margin: auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
     }
 
     h1 {
@@ -28,54 +27,57 @@
     }
 
     .description {
+      margin-bottom: 2rem;
+      color: #333;
       font-size: 0.95rem;
-      color: #444;
-      margin-bottom: 1.5rem;
     }
 
     label {
       display: block;
-      margin-bottom: 0.4rem;
-      font-weight: bold;
+      font-weight: 500;
+      margin-top: 1rem;
+      margin-bottom: 0.3rem;
     }
 
     input[type="text"],
     textarea,
     select {
       width: 100%;
+      padding: 0.8rem;
       font-size: 1rem;
-      font-family: 'Roboto', sans-serif;
-      padding: 0.75rem;
       border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
+      border-radius: 6px;
+      font-family: 'Roboto', sans-serif;
       box-sizing: border-box;
-      appearance: none;
-      background-image: url("data:image/svg+xml;utf8,<svg fill='%23333' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-      background-repeat: no-repeat;
-      background-position: right 24px center;
-      background-size: 1rem;
-      background-color: white;
     }
 
     textarea {
-      height: 140px;
-      resize: vertical;
+      height: 120px;
+    }
+
+    select {
+      appearance: none;
+      background: white url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' fill='%23333' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat right 1.2rem center/1rem 1rem;
+      padding-right: 2.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
     }
 
     button {
       background-color: #793C8A;
       color: white;
       border: none;
-      border-radius: 8px;
-      padding: 0.75rem 1.5rem;
+      padding: 0.8rem 1.5rem;
       font-size: 1rem;
-      font-family: 'Roboto', sans-serif;
+      border-radius: 6px;
       cursor: pointer;
+      margin-top: 1rem;
     }
 
     button:hover {
-      background-color: #692f79;
+      background-color: #652f76;
     }
 
     .status {
@@ -85,12 +87,13 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🛠️ Send inn feil eller forbedringsforslag</h1>
-    <p class="description">
+  <div class="form-container">
+    <h1>🔧 Send inn feil eller forbedringsforslag</h1>
+    <div class="description">
       Oppdaget noe som ikke fungerer som det skal, eller har du forslag til hvordan vi kan forbedre løsningen?
       Send inn dine innspill her – vi setter stor pris på tilbakemeldinger fra brukerne våre!
-    </p>
+    </div>
+
     <form id="issueForm">
       <label for="title">Tittel</label>
       <input type="text" id="title" name="title" required />
@@ -100,34 +103,47 @@
 
       <label for="label">Kategori</label>
       <select id="label" name="label">
-        <option value="Ny funksjonalitet">Ny funksjonalitet</option>
-        <option value="Kritisk feil">Kritisk feil</option>
-        <option value="Feil">Feil</option>
-        <option value="Forbedringsønske">Forbedringsønske</option>
+        <option>Ny funksjonalitet</option>
+        <option>Kritisk feil</option>
+        <option>Feil</option>
+        <option>Forbedringsønske</option>
+      </select>
+
+      <label for="userType">Brukertype</label>
+      <select id="userType" name="userType">
+        <option>Privatperson</option>
+        <option>Organisasjon</option>
+        <option>Administrator/saksbehandler</option>
+        <option>Utvikling og drift</option>
+        <option>Annet</option>
       </select>
 
       <button type="submit">Send inn</button>
+      <div id="status" class="status"></div>
     </form>
-    <div id="status" class="status"></div>
   </div>
 
   <script>
-    const form = document.getElementById("issueForm");
-    const status = document.getElementById("status");
+    const form = document.getElementById('issueForm');
+    const statusDiv = document.getElementById('status');
 
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = document.getElementById("title").value;
-      const body = document.getElementById("body").value;
-      const label = document.getElementById("label").value;
 
-      const response = await fetch("/.netlify/functions/create-issue", {
-        method: "POST",
-        body: JSON.stringify({ title, body, label }),
+      const title = document.getElementById('title').value.trim();
+      const body = document.getElementById('body').value.trim();
+      const label = document.getElementById('label').value.trim();
+      const userType = document.getElementById('userType').value.trim();
+
+      const finalBody = `${body}\n\nBrukertype: ${userType}`;
+
+      const response = await fetch('/.netlify/functions/create-issue', {
+        method: 'POST',
+        body: JSON.stringify({ title, body: finalBody, label }),
       });
 
       const result = await response.json();
-      status.textContent = result.message;
+      statusDiv.innerText = result.message || 'Noe gikk galt.';
     });
   </script>
 </body>
