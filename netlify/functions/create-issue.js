@@ -1,39 +1,26 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-const { get, set } = require('@netlify/kv');
 
 exports.handler = async (event) => {
-  const { title, body, label, role, contact, url } = JSON.parse(event.body);
+  const { title, description, category, role, contact, url } = JSON.parse(event.body);
 
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const OWNER = 'PorticoEstate';
   const REPO = 'aktiv-kommune-skjema';
   const PROJECT_ID = 'PVT_kwDOAhowTc4AUfeE';
   const MILESTONE_NAME = 'Innkommende feil og forslag';
-  const KV_KEY = 'daily_submission_count';
 
   try {
-    // 🔒 Rate limiting – max 100 issues per dag
-    const today = new Date().toISOString().split('T')[0];
-    const kvKey = `${KV_KEY}_${today}`;
-    const currentCount = (await get(kvKey)) || 0;
-
-    if (currentCount >= 100) {
-      return {
-        statusCode: 429,
-        body: JSON.stringify({ message: 'Daglig grense på 100 innsendinger er nådd.' }),
-      };
-    }
-
-    // 🔍 Hent milestone
+    // Hent tilgjengelige milestones
     const milestoneRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/milestones`, {
       headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
-        Accept: 'application/vnd.github+json',
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github+json',
       },
     });
 
     const milestones = await milestoneRes.json();
-    const milestone = milestones.find((m) => m.title === MILESTONE_NAME);
+    const milestone = milestones.find(m => m.title === MILESTONE_NAME);
+
     if (!milestone) {
       return {
         statusCode: 404,
@@ -41,86 +28,73 @@ exports.handler = async (event) => {
       };
     }
 
-    // 📝 Lag markdown-basert body med headings
-    const markdownBody = `
-## Beskrivelse
-${body}
+    const fullDescription = `## Beskrivelse\n${description}\n\n## Din rolle\n${role}\n${
+      contact ? `\n## Sendt inn av\n${contact}` : ''
+    }${url ? `\n\n## Lenke til side der feilen oppstår\n${url}` : ''}`;
 
-## Din rolle
-${role}
-
-${url ? `## Relevant lenke\n${url}` : ''}
-
-${contact ? `## Sendt inn av\n${contact}` : ''}
-`.trim();
-
-    // 🐛 Opprett GitHub issue
+    // Opprett issue
     const issueRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
-        Accept: 'application/vnd.github+json',
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github+json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         title,
-        body: markdownBody,
+        body: fullDescription,
+        labels: [category],
         milestone: milestone.number,
-        labels: [label],
       }),
     });
 
     const issue = await issueRes.json();
+
     if (!issue.number) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ message: 'Issue kunne ikke opprettes.', error: issue }),
+        body: JSON.stringify({ message: 'Failed to create issue.', error: issue }),
       };
     }
 
-    // 📌 Legg til i GitHub-prosjektet
+    // Legg til i GitHub-prosjekt
     const projectAddRes = await fetch('https://api.github.com/graphql', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         query: `
           mutation {
-            addProjectV2ItemById(input: {
-              projectId: "${PROJECT_ID}",
-              contentId: "${issue.node_id}"
-            }) {
-              item { id }
+            addProjectV2ItemById(input: {projectId: "${PROJECT_ID}", contentId: "${issue.node_id}"}) {
+              item {
+                id
+              }
             }
           }
         `,
       }),
     });
 
-    const projectResult = await projectAddRes.json();
-    if (projectResult.errors) {
+    const projectAddData = await projectAddRes.json();
+
+    if (projectAddData.errors) {
       return {
         statusCode: 500,
-        body: JSON.stringify({
-          message: 'Issue opprettet, men kunne ikke legges til i prosjekt.',
-          errors: projectResult.errors,
-        }),
+        body: JSON.stringify({ message: 'Issue created but failed to add to project.', errors: projectAddData.errors }),
       };
     }
 
-    // 📈 Oppdater Netlify KV
-    await set(kvKey, currentCount + 1, { expirationTtl: 86400 });
-
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: `Issue opprettet: #${issue.number}` }),
+      body: JSON.stringify({ message: `Issue opprettet! Nummer: ${issue.number}` }),
     };
+
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Uventet serverfeil', error: error.message }),
+      body: JSON.stringify({ message: 'Server error.', error: error.message }),
     };
   }
 };
