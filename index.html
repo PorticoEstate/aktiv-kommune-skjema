@@ -50,6 +50,14 @@
       resize: vertical;
       height: 140px;
     }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg fill='black' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1.5rem center;
+      background-size: 1rem;
+      padding-right: 3rem; /* Mer luft til høyre for chevron */
+      appearance: none;
+    }
     .helper {
       font-size: 0.85rem;
       color: #666;
@@ -156,12 +164,12 @@
       e.preventDefault();
 
       const title = document.getElementById('title').value;
-      const body = document.getElementById('body').value;
+      const bodyText = document.getElementById('body').value;
       const label = document.getElementById('label').value;
       const role = document.getElementById('role').value;
       const email = document.getElementById('email').value;
 
-      let fullBody = `${body}\n\nKategori: ${label}\nDin rolle: ${role}`;
+      let fullBody = `${bodyText}\n\nDin rolle\n${role}`;
       if (email.trim() !== '') {
         fullBody += `\n\n---\nSendt inn av:\n${email}`;
       }
