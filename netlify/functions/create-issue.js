@@ -8,10 +8,29 @@ exports.handler = async (event) => {
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const OWNER = 'PorticoEstate';
   const REPO = 'aktiv-kommune-skjema';
-  const PROJECT_ID = 'PVT_kwDOAhowTc4AUfeE'; // Project V2 ID
+  const PROJECT_ID = 'PVT_kwDOAhowTc4AUfeE';
+  const MILESTONE_NAME = 'Innkommende feil og forslag';
 
   try {
-    // 1. Opprett issue med label
+    // 1. Hent tilgjengelige milestones
+    const milestoneRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/milestones`, {
+      headers: {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github+json',
+      },
+    });
+
+    const milestones = await milestoneRes.json();
+    const milestone = milestones.find(m => m.title === MILESTONE_NAME);
+
+    if (!milestone) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ message: `Milestone "${MILESTONE_NAME}" not found.` }),
+      };
+    }
+
+    // 2. Opprett issue med label og milestone
     const issueRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
       method: 'POST',
       headers: {
@@ -22,7 +41,8 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         title,
         body,
-        labels: [label] // 👈 Legger til valgt etikett
+        labels: [label],
+        milestone: milestone.number
       }),
     });
 
@@ -35,7 +55,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // 2. Legg til issue i GitHub-prosjektet
+    // 3. Legg til issue i GitHub-prosjektet
     const projectAddRes = await fetch('https://api.github.com/graphql', {
       method: 'POST',
       headers: {
