@@ -3,7 +3,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 exports.handler = async (event) => {
   console.log("Deploy trigger"); // for å sikre redeploy
 
-  const { title, body } = JSON.parse(event.body);
+  const { title, body, label } = JSON.parse(event.body);
 
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const OWNER = 'PorticoEstate';
@@ -11,7 +11,7 @@ exports.handler = async (event) => {
   const PROJECT_ID = 'PVT_kwDOAhowTc4AUfeE'; // Project V2 ID
 
   try {
-    // 1. Opprett issue
+    // 1. Opprett issue med label
     const issueRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
       method: 'POST',
       headers: {
@@ -19,7 +19,11 @@ exports.handler = async (event) => {
         'Accept': 'application/vnd.github+json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ title, body }),
+      body: JSON.stringify({
+        title,
+        body,
+        labels: [label] // 👈 Legger til valgt etikett
+      }),
     });
 
     const issue = await issueRes.json();
@@ -31,7 +35,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // 2. Legg til issue i GitHub-prosjektet (Project V2)
+    // 2. Legg til issue i GitHub-prosjektet
     const projectAddRes = await fetch('https://api.github.com/graphql', {
       method: 'POST',
       headers: {
