@@ -1,79 +1,127 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Send inn feil eller forslag</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: "Inter", "Helvetica Neue", sans-serif;
+      background-color: #F9F9F9;
+      margin: 0;
       padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+      color: #2B2B2B;
+    }
+
+    p.description {
+      margin-bottom: 2rem;
+      color: #4a4a4a;
     }
 
     label {
       display: block;
-      margin: 1rem 0 0.3rem;
-      font-weight: bold;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: #2B2B2B;
     }
 
-    input[type="text"] {
-      width: 400px; /* Økt bredde på tittelfeltet */
-      padding: 0.4rem;
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-sizing: border-box;
     }
 
     textarea {
-      width: 400px;  /* Økt bredde */
-      height: 120px; /* Økt høyde */
-      padding: 0.4rem;
-    }
-
-    select {
-      margin-top: 0.3rem;
-      padding: 0.3rem;
+      resize: vertical;
+      height: 120px;
     }
 
     button {
+      background-color: #793C8A;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-top: 1.5rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #692f78;
+    }
+
+    .message {
       margin-top: 1rem;
-      padding: 0.5rem 1rem;
+      color: #b00020;
     }
   </style>
 </head>
 <body>
-  <h1>Send inn feil eller forslag</h1>
-  <form id="feedbackForm">
-    <label for="title">Tittel:</label>
-    <input type="text" id="title" name="title" required />
+  <div class="container">
+    <h1>🛠️ Send inn feil eller forbedringsforslag</h1>
+    <p class="description">
+      Oppdaget noe som ikke fungerer som det skal, eller har du forslag til hvordan vi kan forbedre løsningen? 
+      Send inn dine innspill her – vi setter stor pris på tilbakemeldinger fra brukerne våre!
+    </p>
 
-    <label for="body">Beskrivelse:</label>
-    <textarea id="body" name="body" required></textarea>
+    <form id="feedbackForm">
+      <label for="title">Tittel:</label>
+      <input type="text" id="title" name="title" required>
 
-    <label for="label">Kategori:</label>
-    <select id="label" name="label">
-      <option>Ny funksjonalitet</option>
-      <option>Kritisk feil</option>
-      <option>Feil</option>
-      <option>Forbedringsønske</option>
-    </select>
+      <label for="body">Beskrivelse:</label>
+      <textarea id="body" name="body" required></textarea>
 
-    <br />
-    <button type="submit">Send inn</button>
-  </form>
+      <label for="label">Kategori:</label>
+      <select id="label" name="label">
+        <option value="Ny funksjonalitet">Ny funksjonalitet</option>
+        <option value="Kritisk feil">Kritisk feil</option>
+        <option value="Feil">Feil</option>
+        <option value="Forbedringsønske">Forbedringsønske</option>
+      </select>
 
-  <p id="result"></p>
+      <button type="submit">Send inn</button>
+    </form>
+
+    <div id="message" class="message"></div>
+  </div>
 
   <script>
-    document.getElementById("feedbackForm").addEventListener("submit", async function (event) {
-      event.preventDefault();
-      const title = document.getElementById("title").value;
-      const body = document.getElementById("body").value;
-      const label = document.getElementById("label").value;
+    document.getElementById('feedbackForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
 
-      const response = await fetch("/.netlify/functions/create-issue", {
-        method: "POST",
-        body: JSON.stringify({ title, body, label }),
+      const title = document.getElementById('title').value;
+      const body = document.getElementById('body').value;
+      const label = document.getElementById('label').value;
+
+      const response = await fetch('/.netlify/functions/create-issue', {
+        method: 'POST',
+        body: JSON.stringify({ title, body, label })
       });
 
       const result = await response.json();
-      document.getElementById("result").textContent = result.message || "Ukjent feil oppstod.";
+      document.getElementById('message').textContent = result.message || 'Noe gikk galt.';
     });
   </script>
 </body>
