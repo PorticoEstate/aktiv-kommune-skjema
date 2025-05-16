@@ -1,96 +1,120 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Send inn feil eller forbedringsforslag</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Roboto', sans-serif;
-      background-color: #f8f8f8;
+      background: #f9f9f9;
+      padding: 2rem;
       margin: 0;
-      padding: 0;
     }
     .container {
-      max-width: 640px;
-      margin: 40px auto;
+      max-width: 700px;
+      margin: 0 auto;
       background: white;
-      padding: 32px;
+      padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
     h1 {
       font-family: 'Poppins', sans-serif;
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
     }
-    .intro {
-      font-size: 14px;
+    .description {
+      margin-bottom: 2rem;
       color: #444;
-      margin-bottom: 24px;
+      font-size: 0.95rem;
     }
     label {
+      font-weight: 600;
+      margin-top: 1.5rem;
       display: block;
-      font-weight: 500;
-      margin-bottom: 6px;
-      font-size: 15px;
     }
     input[type="text"],
     textarea,
     select {
       width: 100%;
-      padding: 12px 16px;
-      font-size: 15px;
-      border-radius: 6px;
+      padding: 0.8rem;
+      font-size: 1rem;
       border: 1px solid #ccc;
-      margin-bottom: 20px;
+      border-radius: 8px;
+      margin-top: 0.3rem;
+      box-sizing: border-box;
       font-family: 'Roboto', sans-serif;
-      appearance: none;
-      background-position: right 16px center;
-      background-repeat: no-repeat;
-      background-size: 16px;
     }
-    select {
-      background-image: url('data:image/svg+xml;charset=UTF-8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-      padding-right: 40px;
+    textarea {
+      resize: vertical;
+      height: 140px;
     }
-    select:focus {
-      background-image: url('data:image/svg+xml;charset=UTF-8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 14l5-5 5 5z"/></svg>');
+    .helper {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.2rem;
     }
     button {
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
       background-color: #793C8A;
       color: white;
       border: none;
-      padding: 12px 28px;
-      border-radius: 6px;
-      font-size: 16px;
+      font-size: 1rem;
+      border-radius: 8px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #5e2e6a;
+      background-color: #652f76;
     }
-    .status {
-      margin-top: 20px;
-      font-size: 14px;
-      font-weight: 500;
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 420px;
+      text-align: center;
+      font-size: 1rem;
+    }
+    .modal-content h2 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+    .modal-content button {
+      margin-top: 1.5rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🛠️ Send inn feil eller forbedringsforslag</h1>
-    <p class="intro">Oppdaget noe som ikke fungerer som det skal, eller har du forslag til hvordan vi kan forbedre løsningen? Send inn dine innspill her – vi setter stor pris på tilbakemeldinger fra brukerne våre!</p>
+    <p class="description">
+      Oppdaget noe som ikke fungerer som det skal, eller har du forslag til hvordan vi kan forbedre løsningen?
+      Send inn dine innspill her – vi setter stor pris på tilbakemeldinger fra brukerne våre!
+    </p>
 
-    <form id="feedbackForm">
+    <form id="issueForm">
       <label for="title">Tittel</label>
       <input type="text" id="title" name="title" required>
 
       <label for="body">Beskrivelse</label>
-      <textarea id="body" name="body" rows="6" required></textarea>
+      <textarea id="body" name="body" required></textarea>
 
-      <label for="category">Kategori</label>
-      <select id="category" name="category" required>
+      <label for="label">Kategori</label>
+      <select id="label" name="label" required>
         <option value="Ny funksjonalitet">Ny funksjonalitet</option>
         <option value="Kritisk feil">Kritisk feil</option>
         <option value="Feil">Feil</option>
@@ -106,32 +130,64 @@
         <option value="Annet">Annet</option>
       </select>
 
+      <label for="email">Kontaktinformasjon</label>
+      <input type="text" id="email" name="email" placeholder="din@epost.no">
+      <div class="helper">Frivillig – fyll inn hvis vi kan kontakte deg for oppfølgingsspørsmål.</div>
+
       <button type="submit">Send inn</button>
-      <div class="status" id="status"></div>
     </form>
   </div>
 
-  <script>
-    document.getElementById('feedbackForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const title = document.getElementById('title').value;
-      const bodyText = document.getElementById('body').value;
-      const category = document.getElementById('category').value;
-      const role = document.getElementById('role').value;
+  <!-- Modal -->
+  <div class="modal" id="thankYouModal">
+    <div class="modal-content">
+      <h2>Takk for innsendt bidrag!</h2>
+      <p>Vi setter stor pris på at du tok deg tid til å sende inn et forbedringsforslag eller en feilrapport.<br><br>
+        Feil og kritiske feil vil bli fulgt opp fortløpende, mens forbedringsforslag legges i vår utviklingskø.</p>
+      <button onclick="closeModal()">Ok</button>
+    </div>
+  </div>
 
-      const description = `${bodyText}\n\nKategori: ${category}\nDin rolle: ${role}`;
+  <script>
+    const form = document.getElementById('issueForm');
+    const modal = document.getElementById('thankYouModal');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value;
+      const body = document.getElementById('body').value;
+      const label = document.getElementById('label').value;
+      const role = document.getElementById('role').value;
+      const email = document.getElementById('email').value;
+
+      let fullBody = `${body}\n\nKategori: ${label}\nDin rolle: ${role}`;
+      if (email.trim() !== '') {
+        fullBody += `\n\n---\nSendt inn av:\n${email}`;
+      }
 
       const response = await fetch('/.netlify/functions/create-issue', {
         method: 'POST',
         body: JSON.stringify({
-          title: title,
-          body: description
+          title,
+          body: fullBody,
+          label
         })
       });
 
       const result = await response.json();
-      document.getElementById('status').innerText = result.message || 'Noe gikk galt.';
+
+      if (result.message && result.message.includes("Issue opprettet")) {
+        modal.style.display = 'flex';
+        form.reset();
+      } else {
+        alert("Noe gikk galt. Prøv igjen.");
+      }
     });
+
+    function closeModal() {
+      document.getElementById('thankYouModal').style.display = 'none';
+    }
   </script>
 </body>
 </html>
