@@ -1,80 +1,86 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Send inn feil eller forslag</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: "Inter", "Helvetica Neue", sans-serif;
-      background-color: #F9F9F9;
-      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f9f9f9;
       padding: 2rem;
-      display: flex;
-      justify-content: center;
     }
 
     .container {
-      background-color: white;
+      max-width: 600px;
+      background: white;
       padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      max-width: 600px;
-      width: 100%;
+      margin: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     h1 {
-      font-size: 1.75rem;
+      font-family: 'Poppins', 'Roboto', sans-serif;
+      font-size: 1.8rem;
       margin-bottom: 0.5rem;
-      color: #2B2B2B;
     }
 
-    p.description {
-      margin-bottom: 2rem;
-      color: #4a4a4a;
+    .description {
+      font-size: 0.95rem;
+      color: #444;
+      margin-bottom: 1.5rem;
     }
 
     label {
       display: block;
-      margin-top: 1rem;
-      font-weight: 600;
-      color: #2B2B2B;
+      margin-bottom: 0.4rem;
+      font-weight: bold;
     }
 
     input[type="text"],
     textarea,
     select {
       width: 100%;
+      font-size: 1rem;
+      font-family: 'Roboto', sans-serif;
       padding: 0.75rem;
-      margin-top: 0.25rem;
       border: 1px solid #ccc;
       border-radius: 8px;
-      font-size: 1rem;
+      margin-bottom: 1.5rem;
       box-sizing: border-box;
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg fill='%23333' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 24px center;
+      background-size: 1rem;
+      background-color: white;
     }
 
     textarea {
+      height: 140px;
       resize: vertical;
-      height: 120px;
     }
 
     button {
       background-color: #793C8A;
       color: white;
-      padding: 0.75rem 1.5rem;
       border: none;
       border-radius: 8px;
+      padding: 0.75rem 1.5rem;
       font-size: 1rem;
-      margin-top: 1.5rem;
+      font-family: 'Roboto', sans-serif;
       cursor: pointer;
     }
 
     button:hover {
-      background-color: #692f78;
+      background-color: #692f79;
     }
 
-    .message {
+    .status {
       margin-top: 1rem;
-      color: #b00020;
+      font-size: 0.95rem;
     }
   </style>
 </head>
@@ -82,18 +88,17 @@
   <div class="container">
     <h1>🛠️ Send inn feil eller forbedringsforslag</h1>
     <p class="description">
-      Oppdaget noe som ikke fungerer som det skal, eller har du forslag til hvordan vi kan forbedre løsningen? 
+      Oppdaget noe som ikke fungerer som det skal, eller har du forslag til hvordan vi kan forbedre løsningen?
       Send inn dine innspill her – vi setter stor pris på tilbakemeldinger fra brukerne våre!
     </p>
+    <form id="issueForm">
+      <label for="title">Tittel</label>
+      <input type="text" id="title" name="title" required />
 
-    <form id="feedbackForm">
-      <label for="title">Tittel:</label>
-      <input type="text" id="title" name="title" required>
-
-      <label for="body">Beskrivelse:</label>
+      <label for="body">Beskrivelse</label>
       <textarea id="body" name="body" required></textarea>
 
-      <label for="label">Kategori:</label>
+      <label for="label">Kategori</label>
       <select id="label" name="label">
         <option value="Ny funksjonalitet">Ny funksjonalitet</option>
         <option value="Kritisk feil">Kritisk feil</option>
@@ -103,25 +108,26 @@
 
       <button type="submit">Send inn</button>
     </form>
-
-    <div id="message" class="message"></div>
+    <div id="status" class="status"></div>
   </div>
 
   <script>
-    document.getElementById('feedbackForm').addEventListener('submit', async function (e) {
+    const form = document.getElementById("issueForm");
+    const status = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const title = document.getElementById("title").value;
+      const body = document.getElementById("body").value;
+      const label = document.getElementById("label").value;
 
-      const title = document.getElementById('title').value;
-      const body = document.getElementById('body').value;
-      const label = document.getElementById('label').value;
-
-      const response = await fetch('/.netlify/functions/create-issue', {
-        method: 'POST',
-        body: JSON.stringify({ title, body, label })
+      const response = await fetch("/.netlify/functions/create-issue", {
+        method: "POST",
+        body: JSON.stringify({ title, body, label }),
       });
 
       const result = await response.json();
-      document.getElementById('message').textContent = result.message || 'Noe gikk galt.';
+      status.textContent = result.message;
     });
   </script>
 </body>
