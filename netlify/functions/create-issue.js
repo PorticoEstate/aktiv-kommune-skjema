@@ -1,6 +1,8 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 exports.handler = async (event) => {
+  console.log("Deploy trigger"); // <- Dette tvinger Netlify til å redeploye funksjonen
+
   const { title, body } = JSON.parse(event.body);
 
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
