@@ -13,6 +13,15 @@
     <label for="body">Beskrivelse:</label><br>
     <textarea id="body" name="body" required></textarea><br><br>
 
+    <label for="label">Kategori:</label><br>
+    <select id="label" name="label" required>
+      <option value="">Velg kategori</option>
+      <option value="Ny funksjonalitet">Ny funksjonalitet</option>
+      <option value="Kritisk feil">Kritisk feil</option>
+      <option value="Feil">Feil</option>
+      <option value="Forbedringsønske">Forbedringsønske</option>
+    </select><br><br>
+
     <button type="submit">Send inn</button>
   </form>
 
@@ -24,13 +33,14 @@
       
       const title = document.getElementById('title').value;
       const body = document.getElementById('body').value;
+      const label = document.getElementById('label').value;
 
       const response = await fetch('/.netlify/functions/create-issue', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ title, body })
+        body: JSON.stringify({ title, body, label })
       });
 
       const result = await response.json();
