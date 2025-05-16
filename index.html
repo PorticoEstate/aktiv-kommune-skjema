@@ -1,149 +1,136 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8" />
-  <title>Send inn feil eller forslag</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Send inn feil eller forbedringsforslag</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Roboto', sans-serif;
-      background: #f9f9f9;
-      padding: 2rem;
+      background-color: #f8f8f8;
+      margin: 0;
+      padding: 0;
     }
-
-    .form-container {
+    .container {
+      max-width: 640px;
+      margin: 40px auto;
       background: white;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
-
     h1 {
-      font-family: 'Poppins', 'Roboto', sans-serif;
-      font-size: 1.8rem;
-      margin-bottom: 0.5rem;
+      font-family: 'Poppins', sans-serif;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
     }
-
-    .description {
-      margin-bottom: 2rem;
-      color: #333;
-      font-size: 0.95rem;
+    .intro {
+      font-size: 14px;
+      color: #444;
+      margin-bottom: 24px;
     }
-
     label {
       display: block;
       font-weight: 500;
-      margin-top: 1rem;
-      margin-bottom: 0.3rem;
+      margin-bottom: 6px;
+      font-size: 15px;
     }
-
     input[type="text"],
     textarea,
     select {
       width: 100%;
-      padding: 0.8rem;
-      font-size: 1rem;
-      border: 1px solid #ccc;
+      padding: 12px 16px;
+      font-size: 15px;
       border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
       font-family: 'Roboto', sans-serif;
-      box-sizing: border-box;
-    }
-
-    textarea {
-      height: 120px;
-    }
-
-    select {
       appearance: none;
-      background: white url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' fill='%23333' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat right 1.2rem center/1rem 1rem;
-      padding-right: 2.5rem;
+      background-position: right 16px center;
+      background-repeat: no-repeat;
+      background-size: 16px;
     }
-
-    .form-group {
-      margin-bottom: 1rem;
+    select {
+      background-image: url('data:image/svg+xml;charset=UTF-8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      padding-right: 40px;
     }
-
+    select:focus {
+      background-image: url('data:image/svg+xml;charset=UTF-8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 14l5-5 5 5z"/></svg>');
+    }
     button {
       background-color: #793C8A;
       color: white;
       border: none;
-      padding: 0.8rem 1.5rem;
-      font-size: 1rem;
+      padding: 12px 28px;
       border-radius: 6px;
+      font-size: 16px;
       cursor: pointer;
-      margin-top: 1rem;
     }
-
     button:hover {
-      background-color: #652f76;
+      background-color: #5e2e6a;
     }
-
     .status {
-      margin-top: 1rem;
-      font-size: 0.95rem;
+      margin-top: 20px;
+      font-size: 14px;
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
-  <div class="form-container">
-    <h1>🔧 Send inn feil eller forbedringsforslag</h1>
-    <div class="description">
-      Oppdaget noe som ikke fungerer som det skal, eller har du forslag til hvordan vi kan forbedre løsningen?
-      Send inn dine innspill her – vi setter stor pris på tilbakemeldinger fra brukerne våre!
-    </div>
+  <div class="container">
+    <h1>🛠️ Send inn feil eller forbedringsforslag</h1>
+    <p class="intro">Oppdaget noe som ikke fungerer som det skal, eller har du forslag til hvordan vi kan forbedre løsningen? Send inn dine innspill her – vi setter stor pris på tilbakemeldinger fra brukerne våre!</p>
 
-    <form id="issueForm">
+    <form id="feedbackForm">
       <label for="title">Tittel</label>
-      <input type="text" id="title" name="title" required />
+      <input type="text" id="title" name="title" required>
 
       <label for="body">Beskrivelse</label>
-      <textarea id="body" name="body" required></textarea>
+      <textarea id="body" name="body" rows="6" required></textarea>
 
-      <label for="label">Kategori</label>
-      <select id="label" name="label">
-        <option>Ny funksjonalitet</option>
-        <option>Kritisk feil</option>
-        <option>Feil</option>
-        <option>Forbedringsønske</option>
+      <label for="category">Kategori</label>
+      <select id="category" name="category" required>
+        <option value="Ny funksjonalitet">Ny funksjonalitet</option>
+        <option value="Kritisk feil">Kritisk feil</option>
+        <option value="Feil">Feil</option>
+        <option value="Forbedringsønske">Forbedringsønske</option>
       </select>
 
-      <label for="userType">Brukertype</label>
-      <select id="userType" name="userType">
-        <option>Privatperson</option>
-        <option>Organisasjon</option>
-        <option>Administrator/saksbehandler</option>
-        <option>Utvikling og drift</option>
-        <option>Annet</option>
+      <label for="role">Din rolle</label>
+      <select id="role" name="role" required>
+        <option value="Privatperson">Privatperson</option>
+        <option value="Organisasjon">Organisasjon</option>
+        <option value="Administrator/saksbehandler">Administrator/saksbehandler</option>
+        <option value="Utvikling og drift">Utvikling og drift</option>
+        <option value="Annet">Annet</option>
       </select>
 
       <button type="submit">Send inn</button>
-      <div id="status" class="status"></div>
+      <div class="status" id="status"></div>
     </form>
   </div>
 
   <script>
-    const form = document.getElementById('issueForm');
-    const statusDiv = document.getElementById('status');
-
-    form.addEventListener('submit', async (e) => {
+    document.getElementById('feedbackForm').addEventListener('submit', async function (e) {
       e.preventDefault();
+      const title = document.getElementById('title').value;
+      const bodyText = document.getElementById('body').value;
+      const category = document.getElementById('category').value;
+      const role = document.getElementById('role').value;
 
-      const title = document.getElementById('title').value.trim();
-      const body = document.getElementById('body').value.trim();
-      const label = document.getElementById('label').value.trim();
-      const userType = document.getElementById('userType').value.trim();
-
-      const finalBody = `${body}\n\nBrukertype: ${userType}`;
+      const description = `${bodyText}\n\nKategori: ${category}\nDin rolle: ${role}`;
 
       const response = await fetch('/.netlify/functions/create-issue', {
         method: 'POST',
-        body: JSON.stringify({ title, body: finalBody, label }),
+        body: JSON.stringify({
+          title: title,
+          body: description
+        })
       });
 
       const result = await response.json();
-      statusDiv.innerText = result.message || 'Noe gikk galt.';
+      document.getElementById('status').innerText = result.message || 'Noe gikk galt.';
     });
   </script>
 </body>
