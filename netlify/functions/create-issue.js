@@ -1,35 +1,48 @@
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+import fetch from 'node-fetch';
 import { get, set } from '@netlify/kv';
 
-exports.handler = async (event, context) => {
-  const { title, description, category, role, contact } = JSON.parse(event.body);
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const OWNER = 'PorticoEstate';
+const REPO = 'aktiv-kommune-skjema';
+const PROJECT_ID = 'PVT_kwDOAhowTc4AUfeE';
+const MILESTONE_NAME = 'Innkommende feil og forslag';
+const DAILY_LIMIT = 100;
 
-  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-  const OWNER = 'PorticoEstate';
-  const REPO = 'aktiv-kommune-skjema';
-  const PROJECT_ID = 'PVT_kwDOAhowTc4AUfeE';
-  const MILESTONE_NAME = 'Innkommende feil og forslag';
-
-  // Rate limit per dag
-  const dateKey = new Date().toISOString().split('T')[0];
-  const rateKey = `rate-limit-${dateKey}`;
-  const count = (await get(rateKey)) || 0;
-
-  if (count >= 100) {
-    return {
-      statusCode: 429,
-      body: JSON.stringify({ message: 'Maksimalt antall innsendinger for i dag er nådd.' }),
-    };
+export const handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
+  const now = new Date();
+  const key = `feedback-submissions-${now.toISOString().slice(0, 10)}`;
+
   try {
-    // Finn milestone
+    const currentCount = (await get(key)) || 0;
+    if (currentCount >= DAILY_LIMIT) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({ message: 'Daglig grense nådd. Prøv igjen i morgen.' }),
+      };
+    }
+
+    const { title, description, category, role, email, url } = JSON.parse(event.body);
+
+    // Valider obligatoriske felt
+    if (!title || !description || !category || !role) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: 'Manglende obligatoriske felter.' }),
+      };
+    }
+
+    // 1. Hent milestone-ID
     const milestoneRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/milestones`, {
       headers: {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github+json',
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: 'application/vnd.github+json',
       },
     });
+
     const milestones = await milestoneRes.json();
     const milestone = milestones.find(m => m.title === MILESTONE_NAME);
 
@@ -40,17 +53,19 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Lag GitHub issue
+    // 2. Opprett issue
+    const issueBody = `## Beskrivelse\n${description}\n\n## Din rolle\n${role}\n\n## Kontaktinformasjon\n${email || 'Ikke oppgitt'}\n\n## Feiladresse\n${url || 'Ikke oppgitt'}`;
+
     const issueRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github+json',
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: 'application/vnd.github+json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         title,
-        body: `## Beskrivelse\n${description}\n\n## Din rolle\n${role}\n\n## Sendt inn av\n${contact || ''}`,
+        body: issueBody,
         milestone: milestone.number,
         labels: [category],
       }),
@@ -65,46 +80,50 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Legg til i prosjektet
-    const projectRes = await fetch('https://api.github.com/graphql', {
+    // 3. Legg til i prosjekt
+    const projectAddRes = await fetch('https://api.github.com/graphql', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         query: `
           mutation {
-            addProjectV2ItemById(input: {projectId: "${PROJECT_ID}", contentId: "${issue.node_id}"}) {
-              item {
-                id
-              }
+            addProjectV2ItemById(input: {
+              projectId: "${PROJECT_ID}",
+              contentId: "${issue.node_id}"
+            }) {
+              item { id }
             }
           }
         `,
       }),
     });
 
-    const projectData = await projectRes.json();
-
-    if (projectData.errors) {
+    const projectAddData = await projectAddRes.json();
+    if (projectAddData.errors) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ message: 'Issue opprettet, men kunne ikke legges til prosjekt.', errors: projectData.errors }),
+        body: JSON.stringify({
+          message: 'Issue opprettet, men kunne ikke legges til i prosjekt.',
+          errors: projectAddData.errors,
+        }),
       };
     }
 
-    // Oppdater teller for dagen
-    await set(rateKey, count + 1, { expirationTtl: 86400 }); // Utløper etter 24t
+    // 4. Oppdater teller
+    await set(key, currentCount + 1, { ttl: 86400 });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: `Issue opprettet! Nummer: ${issue.number}` }),
+      body: JSON.stringify({ message: `Issue #${issue.number} opprettet.` }),
     };
+
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Serverfeil', error: error.message }),
+      body: JSON.stringify({ message: 'Serverfeil.', error: error.message }),
     };
   }
 };
