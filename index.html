@@ -2,8 +2,8 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8" />
-  <title>Send inn feil eller forbedringsforslag</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Send inn feil eller forbedringsforslag</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins:wght@600&display=swap" rel="stylesheet">
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
@@ -17,13 +17,13 @@
       max-width: 700px;
       margin: 0 auto;
       background: white;
-      padding: 2rem;
+      padding: 1.5rem;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
     h1 {
       font-family: 'Poppins', sans-serif;
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       margin-bottom: 0.5rem;
     }
     .description {
@@ -33,7 +33,7 @@
     }
     label {
       font-weight: 600;
-      margin-top: 1.5rem;
+      margin-top: 1.25rem;
       display: block;
     }
     .required::after {
@@ -43,11 +43,9 @@
     .helper {
       font-size: 0.85rem;
       color: #666;
-      margin-top: 0.2rem;
-      margin-bottom: 0.5rem;
+      margin: 0.2rem 0 0.5rem;
     }
     input[type="text"],
-    input[type="file"],
     textarea,
     select {
       width: 100%;
@@ -62,6 +60,17 @@
       resize: vertical;
       height: 140px;
     }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg fill='black' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1.5rem center;
+      background-size: 1rem;
+      padding-right: 3rem;
+      appearance: none;
+    }
+    .g-recaptcha {
+      margin-top: 1.5rem;
+    }
     button {
       margin-top: 2rem;
       padding: 0.75rem 1.5rem;
@@ -74,9 +83,6 @@
     }
     button:hover {
       background-color: #652f76;
-    }
-    .g-recaptcha {
-      margin-top: 1.5rem;
     }
     .modal {
       display: none;
@@ -145,10 +151,6 @@
       <div class="helper">Dersom du registrerer en feil, er det veldig nyttig for oss om du kan lime inn nettadressen til stedet feilen oppstår.</div>
       <input type="text" id="url" name="url" placeholder="https://..." />
 
-      <label for="attachments">Legg ved bilde(r)</label>
-      <div class="helper">Du kan laste opp ett eller flere skjermbilder.</div>
-      <input type="file" id="attachments" name="attachments" accept="image/*" multiple>
-
       <div class="g-recaptcha" data-sitekey="6LcUwT8rAAAAAFzn8ti4xRH3uax087dvhLgyRMOV"></div>
 
       <button type="submit">Send inn</button>
@@ -158,34 +160,24 @@
   <div class="modal" id="thankYouModal">
     <div class="modal-content">
       <h2>Takk for ditt bidrag!</h2>
-      <p>Vi setter stor pris på at du tar deg tid til å gjøre Aktiv kommune enda bedre!</p>
+      <p>Vi setter stor pris på at du tar deg tid til å gjøre Aktiv kommune enda bedre!<br><br>
+        Feil og kritiske feil vil bli fulgt opp fortløpende, mens forbedringsforslag legges i vår utviklingskø.</p>
       <button onclick="closeModal()">Ok</button>
     </div>
   </div>
 
   <script>
-    async function encodeFileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
     const form = document.getElementById('issueForm');
     const modal = document.getElementById('thankYouModal');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const title = document.getElementById('title').value;
       const bodyText = document.getElementById('body').value;
       const label = document.getElementById('label').value;
       const role = document.getElementById('role').value;
       const email = document.getElementById('email').value;
       const url = document.getElementById('url').value;
-      const attachments = document.getElementById('attachments').files;
       const recaptchaToken = grecaptcha.getResponse();
 
       if (!recaptchaToken) {
@@ -193,30 +185,9 @@
         return;
       }
 
-      let fullBody = `## Beskrivelse
-${bodyText}
-
-## Din rolle
-${role}`;
-      if (email.trim() !== '') fullBody += `
-
-## Kontaktinformasjon
-${email}`;
-      if (url.trim() !== '') fullBody += `
-
-## Lenke
-${url}`;
-
-      if (attachments.length > 0) {
-        fullBody += `
-
-## Bilder`;
-        for (let i = 0; i < attachments.length; i++) {
-          const base64 = await encodeFileToBase64(attachments[i]);
-          fullBody += `
-![Bilde ${i + 1}](${base64})`;
-        }
-      }
+      let fullBody = `## Beskrivelse\n${bodyText}\n\n## Din rolle\n${role}`;
+      if (email.trim() !== '') fullBody += `\n\n## Kontaktinformasjon\n${email}`;
+      if (url.trim() !== '') fullBody += `\n\n## Lenke\n${url}`;
 
       const response = await fetch('/.netlify/functions/create-issue', {
         method: 'POST',
