@@ -1,6 +1,5 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-// Sett din hemmelige nøkkel for reCAPTCHA her
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
 
 exports.handler = async (event) => {
@@ -28,7 +27,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    // 2. Hent milestone
     const milestoneRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/milestones`, {
       headers: {
         'Authorization': `Bearer ${GITHUB_TOKEN}`,
@@ -45,7 +43,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // 3. Opprett issue
     const issueRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
       method: 'POST',
       headers: {
@@ -70,7 +67,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // 4. Legg til i prosjekt
     const projectRes = await fetch('https://api.github.com/graphql', {
       method: 'POST',
       headers: {
