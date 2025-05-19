@@ -3,7 +3,8 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
 
 exports.handler = async (event) => {
-  const { title, body, label, captchaToken } = JSON.parse(event.body);
+  const { title, body, label, recaptcha } = JSON.parse(event.body);
+const captchaToken = recaptcha;
 
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const OWNER = 'PorticoEstate';
