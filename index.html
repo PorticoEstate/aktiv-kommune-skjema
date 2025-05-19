@@ -104,6 +104,7 @@
       margin-top: 1.5rem;
     }
   </style>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
   <div class="container">
@@ -145,6 +146,9 @@
       <input type="text" id="url" name="url" placeholder="https://...">
       <div class="helper">Frivillig – hjelper oss å finne feilen raskere.</div>
 
+      <!-- reCAPTCHA -->
+      <div class="g-recaptcha" data-sitekey=6LdAuz8rAAAAAK9ogTmN7XrEz-YpAUgplTdUEtY2></div>
+
       <button type="submit">Send inn</button>
     </form>
   </div>
@@ -171,11 +175,17 @@
       const role = document.getElementById('role').value;
       const contact = document.getElementById('email').value;
       const url = document.getElementById('url').value;
+      const recaptcha = grecaptcha.getResponse();
+
+      if (!recaptcha) {
+        alert("Du må bekrefte at du ikke er en robot.");
+        return;
+      }
 
       const response = await fetch('/.netlify/functions/create-issue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, category, role, contact, url })
+        body: JSON.stringify({ title, description, category, role, contact, url, recaptcha })
       });
 
       const result = await response.json();
@@ -183,6 +193,7 @@
       if (result.message && result.message.includes("Issue opprettet")) {
         modal.style.display = 'flex';
         form.reset();
+        grecaptcha.reset();
       } else {
         alert("Noe gikk galt. Prøv igjen.");
       }
