@@ -1,7 +1,7 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 // Sett din hemmelige nøkkel for reCAPTCHA her
-const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
 
 exports.handler = async (event) => {
   const { title, body, label, captchaToken } = JSON.parse(event.body);
