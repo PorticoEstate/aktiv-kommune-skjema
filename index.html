@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Send inn feil eller forbedringsforslag</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins:wght@600&display=swap" rel="stylesheet">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     body {
       font-family: 'Roboto', sans-serif;
@@ -23,6 +24,13 @@
       font-family: 'Poppins', sans-serif;
       font-size: 1.8rem;
       margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    h1 svg {
+      width: 2rem;
+      height: 2rem;
     }
     .description {
       margin-bottom: 2rem;
@@ -30,9 +38,19 @@
       font-size: 0.95rem;
     }
     label {
-      font-weight: 500;
+      font-weight: 600;
       margin-top: 1.5rem;
       display: block;
+    }
+    .required::after {
+      content: " *";
+      color: red;
+    }
+    .helper {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.2rem;
+      margin-bottom: 0.5rem;
     }
     input[type="text"],
     textarea,
@@ -42,7 +60,6 @@
       font-size: 1rem;
       border: 1px solid #ccc;
       border-radius: 8px;
-      margin-top: 0.3rem;
       box-sizing: border-box;
       font-family: 'Roboto', sans-serif;
     }
@@ -57,11 +74,6 @@
       background-size: 1rem;
       padding-right: 3rem;
       appearance: none;
-    }
-    .helper {
-      font-size: 0.85rem;
-      color: #666;
-      margin-top: 0.2rem;
     }
     button {
       margin-top: 2rem;
@@ -104,24 +116,30 @@
       margin-top: 1.5rem;
     }
   </style>
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
   <div class="container">
-    <h1>🛠️ Send inn feil eller forbedringsforslag</h1>
+    <h1>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+        <path stroke="black" stroke-width="1.5" d="M3.75 13V8.25a3 3 0 0 1 3-3h.712a2 2 0 0 0 1.81-1.144l.195-.414A2 2 0 0 1 11.27 2h.479a.25.25 0 0 1 .25.25V18a.25.25 0 0 1-.25.25h-.479a2 2 0 0 1-1.803-1.208l-.196-.455A2 2 0 0 0 7.49 15.25h-.74a3 3 0 0 1-3-3Z"/>
+        <path stroke="black" stroke-width="1.5" d="M17 9v6m4-4v2m-8 7.5v-11a.5.5 0 0 1 .697-.46l3.166 1.357a3 3 0 0 1 1.773 2.742v3.72a3 3 0 0 1-1.782 2.745l-3.15 1.392A.5.5 0 0 1 13 20.5Z"/>
+      </svg>
+      Send inn feil eller forbedringsforslag
+    </h1>
+
     <p class="description">
       Oppdaget noe som ikke fungerer som det skal, eller har du forslag til hvordan vi kan forbedre løsningen?
       Send inn dine innspill her – vi setter stor pris på tilbakemeldinger fra brukerne våre!
     </p>
 
     <form id="issueForm">
-      <label for="title">Tittel</label>
+      <label class="required" for="title">Tittel</label>
       <input type="text" id="title" name="title" required>
 
-      <label for="body">Beskrivelse</label>
+      <label class="required" for="body">Beskrivelse</label>
       <textarea id="body" name="body" required></textarea>
 
-      <label for="label">Kategori</label>
+      <label class="required" for="label">Kategori</label>
       <select id="label" name="label" required>
         <option value="Ny funksjonalitet">Ny funksjonalitet</option>
         <option value="Kritisk feil">Kritisk feil</option>
@@ -129,7 +147,7 @@
         <option value="Forbedringsønske">Forbedringsønske</option>
       </select>
 
-      <label for="role">Din rolle</label>
+      <label class="required" for="role">Din rolle</label>
       <select id="role" name="role" required>
         <option value="Privatperson">Privatperson</option>
         <option value="Organisasjon">Organisasjon</option>
@@ -139,15 +157,14 @@
       </select>
 
       <label for="email">Kontaktinformasjon</label>
+      <div class="helper">Legg inn din e-post adresse om du ønsker, slik at vi kan kontakte deg for oppfølgingsspørsmål.</div>
       <input type="text" id="email" name="email" placeholder="din@epost.no">
-      <div class="helper">Frivillig – fyll inn hvis vi kan kontakte deg for oppfølgingsspørsmål.</div>
 
       <label for="url">Lenke til side der feilen oppstår</label>
-      <input type="text" id="url" name="url" placeholder="https://...">
-      <div class="helper">Frivillig – hjelper oss å finne feilen raskere.</div>
+      <div class="helper">Dersom du registrerer en feil, er det veldig nyttig for oss om du kan lime inn nettadressen til stedet feilen oppstår.</div>
+      <input type="text" id="url" name="url" placeholder="https://..." />
 
-      <!-- reCAPTCHA -->
-      <div class="g-recaptcha" data-sitekey=6LdAuz8rAAAAAK9ogTmN7XrEz-YpAUgplTdUEtY2></div>
+      <div class="g-recaptcha" data-sitekey=6LcUwT8rAAAAAFzn8ti4xRH3uax087dvhLgyRMOV></div>
 
       <button type="submit">Send inn</button>
     </form>
@@ -155,9 +172,9 @@
 
   <div class="modal" id="thankYouModal">
     <div class="modal-content">
-      <h2>Takk for innsendt bidrag!</h2>
-      <p>Vi setter stor pris på at du tok deg tid til å sende inn et forbedringsforslag eller en feilrapport.<br><br>
-      Feil og kritiske feil vil bli fulgt opp fortløpende, mens forbedringsforslag legges i vår utviklingskø.</p>
+      <h2>Takk for ditt bidrag!</h2>
+      <p>Vi setter stor pris på at du tar deg tid til å gjøre Aktiv kommune enda bedre!<br><br>
+        Feil og kritiske feil vil bli fulgt opp fortløpende, mens forbedringsforslag legges i vår utviklingskø.</p>
       <button onclick="closeModal()">Ok</button>
     </div>
   </div>
@@ -170,22 +187,30 @@
       e.preventDefault();
 
       const title = document.getElementById('title').value;
-      const description = document.getElementById('body').value;
-      const category = document.getElementById('label').value;
+      const bodyText = document.getElementById('body').value;
+      const label = document.getElementById('label').value;
       const role = document.getElementById('role').value;
-      const contact = document.getElementById('email').value;
+      const email = document.getElementById('email').value;
       const url = document.getElementById('url').value;
-      const recaptcha = grecaptcha.getResponse();
+      const recaptchaToken = grecaptcha.getResponse();
 
-      if (!recaptcha) {
-        alert("Du må bekrefte at du ikke er en robot.");
+      if (!recaptchaToken) {
+        alert("Vennligst bekreft at du ikke er en robot.");
         return;
       }
 
+      let fullBody = `## Beskrivelse\n${bodyText}\n\n## Din rolle\n${role}`;
+      if (email.trim() !== '') fullBody += `\n\n## Kontaktinformasjon\n${email}`;
+      if (url.trim() !== '') fullBody += `\n\n## Lenke\n${url}`;
+
       const response = await fetch('/.netlify/functions/create-issue', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, category, role, contact, url, recaptcha })
+        body: JSON.stringify({
+          title,
+          body: fullBody,
+          label,
+          recaptcha: recaptchaToken
+        })
       });
 
       const result = await response.json();
@@ -200,7 +225,7 @@
     });
 
     function closeModal() {
-      modal.style.display = 'none';
+      document.getElementById('thankYouModal').style.display = 'none';
     }
   </script>
 </body>
