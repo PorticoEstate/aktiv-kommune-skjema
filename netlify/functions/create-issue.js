@@ -8,7 +8,7 @@ const captchaToken = recaptcha;
 
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const OWNER = 'PorticoEstate';
-  const REPO = 'aktiv-kommune-skjema';
+  const REPO = 'PorticoEstate';
   const PROJECT_ID = 'PVT_kwDOAhowTc4AUfeE';
   const MILESTONE_NAME = 'Innkommende feil og forslag';
 
