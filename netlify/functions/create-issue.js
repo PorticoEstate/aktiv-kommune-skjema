@@ -1,4 +1,4 @@
-// Netlify function: create-issue.js (uten reCAPTCHA for testing)
+// Netlify function: create-issue.js (uten reCAPTCHA)
 // Lager GitHub issues med assignee basert på Kategori (label)
 
 const CORS = {
@@ -117,7 +117,11 @@ exports.handler = async (event) => {
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ message: `Issue #${issue.number} opprettet, men kunne ikke legges i prosjekt`, errors: projectOk.errors }) };
     }
 
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ message: `Issue opprettet! Nummer: ${issue.number}`, issueNumber: issue.number, assignees }) };
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({ message: `Issue opprettet! Nummer: ${issue.number}`, issueNumber: issue.number, assignees }),
+    };
 
   } catch (err) {
     console.error('Uventet serverfeil:', err);
@@ -148,6 +152,6 @@ async function addToProject({ token, projectId, contentId }) {
   if (gqlData.errors) {
     console.error('❌ GraphQL Project-add feilet:', gqlData.errors);
     return { ok: false, errors: gqlData.errors };
-    }
+  }
   return { ok: true };
 }
