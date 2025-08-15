@@ -62,13 +62,13 @@ exports.handler = async (event) => {
         assignee = 'ArildR82';
         break;
       case 'Kritisk feil':
-        assignee = 'GeirA123';
+        assignee = 'geirsandvoll';
         break;
       case 'Feil':
-        assignee = 'SigurdSys';
+        assignee = 'geirsandvoll';
         break;
       case 'Forbedringsønske':
-        assignee = 'ReidarAdmin';
+        assignee = 'ArildR82';
         break;
       default:
         assignee = null;
