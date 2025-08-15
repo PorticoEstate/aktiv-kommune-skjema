@@ -1,17 +1,16 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
+const OWNER = 'PorticoEstate';
+const REPO = 'PorticoEstate';
+const PROJECT_ID = 'PVT_kwDOAhowTc4AUfeE';
+const MILESTONE_NAME = 'Innkommende feil og forslag';
 
 exports.handler = async (event) => {
   const { title, body, label, recaptcha } = JSON.parse(event.body);
   const captchaToken = recaptcha;
-
-  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-  const OWNER = 'PorticoEstate';
-  const REPO = 'PorticoEstate';
-  const PROJECT_ID = 'PVT_kwDOAhowTc4AUfeE';
-  const MILESTONE_NAME = 'Innkommende feil og forslag';
-  const DEFAULT_ASSIGNEE = process.env.DEFAULT_ASSIGNEE || 'GITHUB_USERNAME'; // <– sett miljøvariabel eller bytt ut denne
 
   // 1) Valider reCAPTCHA
   const captchaRes = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
@@ -19,6 +18,7 @@ exports.handler = async (event) => {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `secret=${RECAPTCHA_SECRET}&response=${encodeURIComponent(captchaToken)}`
   });
+
   const captchaData = await captchaRes.json();
 
   if (!captchaData.success) {
@@ -50,19 +50,40 @@ exports.handler = async (event) => {
     if (!milestone) {
       return {
         statusCode: 404,
-        body: JSON.stringify({ message: `Milestone "${MILESTONE_NAME}" not found.` }),
+        body: JSON.stringify({ message: `Milestone "${MILESTONE_NAME}" ikke funnet.` }),
       };
     }
 
-    // 3) Opprett issue (med assignee)
+    // 3) Tildel assignee basert på valgt kategori (label)
+    let assignee = null;
+
+    switch (label) {
+      case 'Ny funksjonalitet':
+        assignee = 'ArildR82';
+        break;
+      case 'Kritisk feil':
+        assignee = 'GeirA123';
+        break;
+      case 'Feil':
+        assignee = 'SigurdSys';
+        break;
+      case 'Forbedringsønske':
+        assignee = 'ReidarAdmin';
+        break;
+      default:
+        assignee = null;
+    }
+
+    // 4) Bygg issuePayload
     const issuePayload = {
       title,
       body,
       labels: label ? [label] : [],
       milestone: milestone.number,
-      assignees: ['ArildR82'],
+      ...(assignee && { assignees: [assignee] }),
     };
 
+    // 5) Opprett issue
     const issueRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
       method: 'POST',
       headers: {
@@ -82,7 +103,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // 4) Legg til i GitHub Project (Projects v2)
+    // 6) Legg til i GitHub Project (Projects v2)
     const projectRes = await fetch('https://api.github.com/graphql', {
       method: 'POST',
       headers: {
