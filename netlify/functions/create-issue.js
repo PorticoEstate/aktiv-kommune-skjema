@@ -1,4 +1,6 @@
-// create-issue.js (Netlify function)
+// Netlify function: create-issue.js
+// Lager GitHub issues med assignee basert på Kategori (label)
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
@@ -6,6 +8,7 @@ const CORS = {
 };
 
 exports.handler = async (event) => {
+  // OPTIONS preflight
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: CORS, body: '' };
   }
@@ -23,7 +26,7 @@ exports.handler = async (event) => {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ message: 'Mangler RECAPTCHA_SECRET_KEY eller GITHUB_TOKEN' }) };
     }
 
-    // --- Parse body
+    // Parse body
     let payload;
     try { payload = JSON.parse(event.body || '{}'); }
     catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ message: 'Ugyldig JSON i request body' }) }; }
@@ -33,7 +36,7 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ message: 'Påkrevde felt: title, body, label, recaptcha' }) };
     }
 
-    // --- reCAPTCHA
+    // reCAPTCHA-validering
     const captchaRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -44,7 +47,7 @@ exports.handler = async (event) => {
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ message: 'reCAPTCHA-validering feilet' }) };
     }
 
-    // --- Milestone
+    // Hent milestone
     const msRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/milestones`, {
       headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github+json' },
     });
@@ -57,14 +60,22 @@ exports.handler = async (event) => {
       return { statusCode: 404, headers: CORS, body: JSON.stringify({ message: `Milestone "${MILESTONE_NAME}" ikke funnet` }) };
     }
 
-    // --- Label -> assignees
+    // Label → assignees
     const l = (label || '').trim().toLowerCase();
     let assignees = [];
     if (l === 'ny funksjonalitet' || l === 'forbedringsønske') assignees = ['ArildR82'];
     else if (l === 'feil' || l === 'kritisk feil') assignees = ['geirsandvoll'];
     else if (DEFAULT_ASSIGNEE) assignees = [DEFAULT_ASSIGNEE];
 
-    // --- Opprett issue
+    // Opprett issue
+    const issuePayload = {
+      title,
+      body,
+      labels: [label],
+      milestone: milestone.number,
+      ...(assignees.length ? { assignees } : {}),
+    };
+
     const issueRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
       method: 'POST',
       headers: {
@@ -72,18 +83,49 @@ exports.handler = async (event) => {
         'Accept': 'application/vnd.github+json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        title,
-        body,
-        labels: [label],
-        milestone: milestone.number,
-        ...(assignees.length ? { assignees } : {}),
-      }),
+      body: JSON.stringify(issuePayload),
     });
+
+    // Sjekk for 422 (vanlig ved assignee uten tilgang)
+    if (issueRes.status === 422) {
+      const errorData = await issueRes.json();
+      console.error('⚠️ GitHub 422-feil ved oppretting av issue:', errorData);
+      const assigneeError = errorData.errors?.find(e => e.field === 'assignees');
+      if (assigneeError) {
+        console.error(`Assignee-feil: ${assigneeError.message}`);
+      }
+      return { statusCode: 422, headers: CORS, body: JSON.stringify({ message: 'GitHub avviste assignee', error: errorData }) };
+    }
 
     const issue = await issueRes.json();
     if (!issueRes.ok || !issue.number) {
-      return { statusCode: issueRes.status || 500, headers: CORS, body: JSON.stringify({ message: 'Feil ved oppretting av issue', error: issue }) };
+      return {
+        statusCode: issueRes.status || 500,
+        headers: CORS,
+        body: JSON.stringify({ message: 'Feil ved oppretting av issue', error: issue }),
+      };
     }
 
-    // --- Legg til i Project v2
+    // Legg til i Project v2
+    const gqlRes = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `
+          mutation($projectId: ID!, $contentId: ID!) {
+            addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
+              item { id }
+            }
+          }`,
+        variables: { projectId: PROJECT_ID, contentId: issue.node_id },
+      }),
+    });
+
+    const gqlData = await gqlRes.json();
+    if (gqlData.errors) {
+      return {
+        statusCode: 200,
+        headers: CORS,
