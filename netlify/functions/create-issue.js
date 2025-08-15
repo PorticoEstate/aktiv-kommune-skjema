@@ -60,7 +60,7 @@ exports.handler = async (event) => {
       body,
       labels: label ? [label] : [],
       milestone: milestone.number,
-      assignees: [DEFAULT_ASSIGNEE],
+      assignees: ['ArildR82'],
     };
 
     const issueRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
